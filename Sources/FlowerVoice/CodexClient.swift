@@ -22,13 +22,16 @@ enum CodexClientError: LocalizedError {
 /// Calls the ChatGPT-backed Codex Responses endpoint with the user's Codex subscription.
 final class CodexClient {
     private static let RESPONSES_URL = URL(string: "https://chatgpt.com/backend-api/codex/responses")!
+    /// Identifies FlowerVoice honestly instead of posing as the Codex CLI.
+    private static let ORIGINATOR = "flowervoice"
     private let auth = CodexAuth()
 
     func complete(_ request: CodexRequest) async throws -> String {
+        let credentials = try await auth.credentials()
         do {
-            return try await send(request, credentials: try await auth.credentials())
+            return try await send(request, credentials: credentials)
         } catch CodexClientError.http(401, _) {
-            return try await send(request, credentials: try await auth.refresh())
+            return try await send(request, credentials: try await auth.refresh(rejecting: credentials.accessToken))
         }
     }
 
@@ -78,7 +81,7 @@ final class CodexClient {
             "Content-Type": "application/json",
             "Accept": "text/event-stream",
             "OpenAI-Beta": "responses=experimental",
-            "originator": "codex_cli_rs",
+            "originator": Self.ORIGINATOR,
             "session_id": UUID().uuidString,
         ]
         headers.forEach { urlRequest.setValue($0.value, forHTTPHeaderField: $0.key) }

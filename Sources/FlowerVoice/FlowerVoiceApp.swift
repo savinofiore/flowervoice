@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let logger = Logger(subsystem: "dev.fiore.flowervoice", category: "app")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        ConfigStore.restrictPermissions()
         controller = DictationController(config: ConfigStore.load())
         settingsWindow.onSave = { [weak self] config in self?.controller.config = config }
         menuBar.onOpenHistory = { [weak self] in

@@ -22,7 +22,7 @@ final class OverlayModel: ObservableObject {
     }
 }
 
-/// Small floating pill at the bottom of the screen, like Willow's bar.
+/// Small floating pill at the bottom of the screen showing the recording state and voice level.
 struct OverlayView: View {
     @ObservedObject var model: OverlayModel
 

@@ -33,7 +33,7 @@ enum DebugCommand {
 
     private static func run(path: String, bundleId: String) async {
         let config = ConfigStore.load()
-        let context = FocusContext(appName: bundleId, bundleId: bundleId, textBeforeCursor: nil)
+        let context = FocusContext(appName: bundleId, bundleId: bundleId, textBeforeCursor: nil, isSensitive: false)
         do {
             let samples = try loadSamples(URL(fileURLWithPath: path))
             let transcriber = Transcriber()

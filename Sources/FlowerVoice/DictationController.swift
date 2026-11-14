@@ -77,14 +77,21 @@ final class DictationController {
         do {
             let transcript = try await transcriber.transcribe(audio.samples, config: config)
             guard !transcript.isEmpty else { return NSSound.beep() }
-            let text = await cleaner.clean(transcript, context: context, config: config)
-            TextInserter.insert(text, after: textBefore(context))
+            let text = await cleanUnlessSensitive(transcript, context: context)
+            TextInserter.insert(TargetAppPolicy.adaptForPaste(text, bundleId: context.bundleId), after: textBefore(context))
+            guard !context.isSensitive else { return }
             lastInsertion = Insertion(bundleId: context.bundleId, text: text, date: Date())
             DictationHistory.append(transcript: transcript, text: text, context: context)
         } catch {
             logger.error("Dictation failed: \(error.localizedDescription, privacy: .public)")
             NSSound.beep()
         }
+    }
+
+    /// Sensitive targets (password fields, password managers) get the raw transcript: nothing is sent to Codex.
+    private func cleanUnlessSensitive(_ transcript: String, context: FocusContext) async -> String {
+        guard !context.isSensitive else { return transcript }
+        return await cleaner.clean(transcript, context: context, config: config)
     }
 
     /// Real text before the cursor when readable; otherwise our own last insertion in the same app, if recent.

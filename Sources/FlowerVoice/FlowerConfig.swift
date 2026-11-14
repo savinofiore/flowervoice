@@ -49,7 +49,14 @@ enum ConfigStore {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         guard let data = try? encoder.encode(config) else { return }
-        try? FileManager.default.createDirectory(at: FlowerPaths.configDirectory, withIntermediateDirectories: true)
-        try? data.write(to: FlowerPaths.configFile, options: .atomic)
+        try? PrivateFiles.createDirectory(FlowerPaths.configDirectory)
+        try? PrivateFiles.write(data, to: FlowerPaths.configFile)
+    }
+
+    /// Config and history hold personal text: keep them readable by the current user only.
+    static func restrictPermissions() {
+        PrivateFiles.restrictExisting(
+            directory: FlowerPaths.configDirectory, files: [FlowerPaths.configFile, FlowerPaths.historyFile]
+        )
     }
 }

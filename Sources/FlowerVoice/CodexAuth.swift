@@ -21,6 +21,7 @@ enum CodexAuthError: LocalizedError {
 
 /// Reads the ChatGPT tokens that the Codex CLI stores, refreshing them the same way Codex does.
 /// Refreshed tokens are written back so Codex keeps working (refresh tokens rotate).
+/// The Codex CLI may refresh the same file at any time, so the file is re-read before and after every refresh.
 actor CodexAuth {
     private static let CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
     private static let TOKEN_URL = URL(string: "https://auth.openai.com/oauth/token")!
@@ -31,19 +32,35 @@ actor CodexAuth {
     func credentials() async throws -> CodexCredentials {
         let credentials = try parseCredentials(try readAuthJSON())
         guard isExpiringSoon(credentials.accessToken) else { return credentials }
-        return try await refresh()
+        return try await refresh(rejecting: credentials.accessToken)
     }
 
-    func refresh() async throws -> CodexCredentials {
+    /// New credentials to replace `rejectedToken`: Codex's own fresh token if it already rotated it, else a refresh.
+    func refresh(rejecting rejectedToken: String) async throws -> CodexCredentials {
         var json = try readAuthJSON()
+        if let current = usableCredentials(json, unlike: rejectedToken) { return current }
         guard var tokens = json["tokens"] as? [String: Any],
               let refreshToken = tokens["refresh_token"] as? String else { throw CodexAuthError.notChatGPTLogin }
-        let fresh = try await requestNewTokens(refreshToken: refreshToken)
+        let fresh: [String: Any]
+        do {
+            fresh = try await requestNewTokens(refreshToken: refreshToken)
+        } catch {
+            // Codex may have used (and rotated) the same refresh token in the meantime.
+            if let current = usableCredentials(try readAuthJSON(), unlike: rejectedToken) { return current }
+            throw error
+        }
         tokens.merge(fresh) { _, new in new }
         json["tokens"] = tokens
         json["last_refresh"] = ISO8601DateFormatter().string(from: Date())
         try writeAuthJSON(json)
         return try parseCredentials(json)
+    }
+
+    private func usableCredentials(_ json: [String: Any], unlike rejectedToken: String) -> CodexCredentials? {
+        guard let credentials = try? parseCredentials(json),
+              credentials.accessToken != rejectedToken,
+              !isExpiringSoon(credentials.accessToken) else { return nil }
+        return credentials
     }
 
     private func requestNewTokens(refreshToken: String) async throws -> [String: Any] {
@@ -74,8 +91,7 @@ actor CodexAuth {
 
     private func writeAuthJSON(_ json: [String: Any]) throws {
         let data = try JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .sortedKeys])
-        try data.write(to: authFile, options: .atomic)
-        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: authFile.path)
+        try PrivateFiles.write(data, to: authFile.resolvingSymlinksInPath())
     }
 
     private func parseCredentials(_ json: [String: Any]) throws -> CodexCredentials {

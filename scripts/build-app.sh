@@ -2,10 +2,11 @@
 # Builds dist/FlowerVoice.app (release, icon, signed).
 #   ./scripts/build-app.sh            build only
 #   ./scripts/build-app.sh --install  build, install into /Applications and launch
-# Signs with a stable identity so macOS keeps the granted permissions across rebuilds.
+# Signs with your Apple Development identity so macOS keeps the granted permissions across local rebuilds.
+# FLOWER_SIGN_IDENTITY overrides it: a "Developer ID Application" name, or "-" for ad-hoc (used by make-dmg.sh).
 set -euo pipefail
 
-VERSION="1.0.1"
+VERSION="1.0.2"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_DIR="$ROOT/dist/FlowerVoice.app"
 INSTALL_DIR="/Applications/FlowerVoice.app"
@@ -46,12 +47,12 @@ cat > "$APP_DIR/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-if [[ -n "$SIGN_IDENTITY" ]]; then
-    codesign --force --options runtime --entitlements "$ROOT/scripts/FlowerVoice.entitlements" --sign "$SIGN_IDENTITY" "$APP_DIR"
-else
-    echo "No signing identity found: ad-hoc signing (permissions reset on every rebuild)."
-    codesign --force --sign - "$APP_DIR"
+if [[ -z "$SIGN_IDENTITY" || "$SIGN_IDENTITY" == "-" ]]; then
+    echo "Ad-hoc signing (macOS asks for permissions again after every rebuild)."
+    SIGN_IDENTITY="-"
 fi
+codesign --force --options runtime --entitlements "$ROOT/scripts/FlowerVoice.entitlements" \
+    --sign "$SIGN_IDENTITY" "$APP_DIR"
 echo "Built $APP_DIR"
 
 [[ "${1:-}" == "--install" ]] || exit 0

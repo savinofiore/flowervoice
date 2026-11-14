@@ -43,15 +43,8 @@ enum DictationHistory {
     }
 
     private static func write(_ line: Data) {
-        let file = FlowerPaths.historyFile
-        guard let handle = try? FileHandle(forWritingTo: file) else {
-            try? FileManager.default.createDirectory(at: FlowerPaths.configDirectory, withIntermediateDirectories: true)
-            try? line.write(to: file, options: .atomic)
-            return
-        }
-        defer { try? handle.close() }
-        _ = try? handle.seekToEnd()
-        try? handle.write(contentsOf: line)
+        try? PrivateFiles.createDirectory(FlowerPaths.configDirectory)
+        try? PrivateFiles.append(line, to: FlowerPaths.historyFile)
     }
 
     private static func makeEncoder() -> JSONEncoder {
