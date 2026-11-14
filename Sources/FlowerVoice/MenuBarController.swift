@@ -3,6 +3,7 @@ import AppKit
 @MainActor
 final class MenuBarController: NSObject {
     var onOpenSettings: (() -> Void)?
+    var onOpenHistory: (() -> Void)?
     var onRequestPermissions: (() -> Void)?
 
     private var statusItem: NSStatusItem?
@@ -34,7 +35,7 @@ final class MenuBarController: NSObject {
         menu.addItem(makeItem("Concedi permessi…", #selector(requestPermissions)))
         menu.addItem(.separator())
         menu.addItem(makeItem("Copia ultima dettatura", #selector(copyLast)))
-        menu.addItem(makeItem("Apri storico", #selector(openHistory)))
+        menu.addItem(makeItem("Storico dettature…", #selector(openHistory), key: "y"))
         menu.addItem(makeItem("Impostazioni…", #selector(openSettings), key: ","))
         menu.addItem(.separator())
         menu.addItem(makeItem("Esci", #selector(quit), key: "q"))
@@ -62,7 +63,7 @@ final class MenuBarController: NSObject {
     }
 
     @objc private func openHistory() {
-        NSWorkspace.shared.open(FlowerPaths.historyFile)
+        onOpenHistory?()
     }
 
     @objc private func quit() {

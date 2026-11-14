@@ -5,7 +5,7 @@
 # Signs with a stable identity so macOS keeps the granted permissions across rebuilds.
 set -euo pipefail
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_DIR="$ROOT/dist/FlowerVoice.app"
 INSTALL_DIR="/Applications/FlowerVoice.app"
@@ -28,6 +28,8 @@ cat > "$APP_DIR/Contents/Info.plist" <<PLIST
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key><string>dev.fiore.flowervoice</string>
+    <key>CFBundleDevelopmentRegion</key><string>it</string>
+    <key>CFBundleLocalizations</key><array><string>it</string></array>
     <key>CFBundleName</key><string>FlowerVoice</string>
     <key>CFBundleDisplayName</key><string>FlowerVoice</string>
     <key>CFBundleExecutable</key><string>FlowerVoice</string>

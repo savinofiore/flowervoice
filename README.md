@@ -11,11 +11,12 @@ Speech-to-text runs **locally** (NVIDIA Parakeet TDT v3 via FluidAudio, on the N
 | **Tap ⌃⌘M** (Ctrl+Cmd+M) | Starts hands-free recording (🔒); tap again to transcribe, clean up and paste |
 | **Hold ⌃⌘M** while talking, then release | Push-to-talk: pastes on release |
 
-Menu bar (flower icon): status, permissions, copy last dictation, history, **Settings… (⌘,)**.
+Menu bar (flower icon): status, permissions, copy last dictation, **Dictation history… (⌘Y)** (search, copy,
+original transcript, clear), **Settings… (⌘,)**.
 
 ## Install
 
-**From the installer:** open `dist/FlowerVoice-1.0.0.dmg` and drag FlowerVoice into Applications.
+**From the installer:** download the latest `FlowerVoice-<version>.dmg` from the GitHub Releases (or build it with `make-dmg.sh`) and drag FlowerVoice into Applications.
 
 **From source:**
 
@@ -68,6 +69,7 @@ Local history: `~/.config/flowervoice/history.jsonl`.
 say -v Alice -o /tmp/t.aiff "ehm allora domani alle tre no alle quattro"
 .build/debug/FlowerVoice --transcribe /tmp/t.aiff com.apple.mail
 open -n --stdout /tmp/mic.txt /Applications/FlowerVoice.app --args --mic-test && sleep 4 && cat /tmp/mic.txt   # 2 s capture from inputDevice
+open /Applications/FlowerVoice.app --args --show-history --show-settings --snapshot /tmp   # window PNGs
 /usr/bin/log stream --predicate 'subsystem == "dev.fiore.flowervoice"'
 ```
 
